@@ -28,7 +28,7 @@ async function buildDailyReportMessage(date = new Date()): Promise<string> {
     orderBy: { orderDate: 'asc' },
   });
 
-  const productIds = [...new Set(orders.flatMap((order) => order.items.map((item) => item.productId)))];
+  const productIds = [...new Set(orders.flatMap((order: any) => order.items.map((item: any) => item.productId)))] as string[];
   const importPrices = await getLastImportPrices(productIds);
 
   let revenue = 0;

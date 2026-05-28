@@ -142,7 +142,7 @@ export async function searchSimilarProducts(embedding: number[], fallbackQuery: 
     );
 
     if (rows.length > 0) {
-      return rows.map((row) => ({
+      return rows.map((row: any) => ({
         product_id: row.product_id,
         product_name: row.product_name,
         sku: row.sku,
@@ -186,7 +186,7 @@ async function fallbackProductSearch(query: string, limit: number): Promise<AiSe
     take: limit,
   });
 
-  return products.map((product, index) => ({
+  return products.map((product: any, index: number) => ({
     product_id: product.id,
     product_name: product.name,
     sku: product.sku,
