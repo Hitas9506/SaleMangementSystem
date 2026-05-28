@@ -11,9 +11,6 @@ const settingsUpdateSchema = z.object({
   bank_name: z.string().trim().optional().nullable(),
   bank_account: z.string().trim().optional().nullable(),
   account_holder_name: z.string().trim().optional().nullable(),
-  zalo_phone: z.string().trim().optional().nullable(),
-  zalo_notify_hour: z.coerce.number().int().min(0).max(23).optional(),
-  zalo_notify_enabled: z.boolean().optional(),
   default_low_stock_threshold: z.coerce.number().int().nonnegative().optional(),
   logo_url: z.string().url().optional().nullable(),
 });
@@ -25,9 +22,6 @@ function settingsResponse(settings: any) {
     bank_name: settings.bankName,
     bank_account: settings.bankAccount,
     account_holder_name: settings.accountHolderName,
-    zalo_phone: settings.zaloPhone,
-    zalo_notify_hour: settings.zaloNotifyHour,
-    zalo_notify_enabled: settings.zaloNotifyEnabled,
     default_low_stock_threshold: settings.defaultLowStockThreshold,
     logo_url: settings.logoUrl,
     created_at: toIso(settings.createdAt),
@@ -44,8 +38,6 @@ async function getOrCreateSettings() {
   return prisma.storeSetting.create({
     data: {
       storeName: 'Cửa hàng Vật tư Gia đình',
-      zaloNotifyHour: 21,
-      zaloNotifyEnabled: true,
       defaultLowStockThreshold: 5,
     },
   });
@@ -71,9 +63,6 @@ settingsRouter.put('/', async (req, res, next) => {
         ...(input.bank_name !== undefined ? { bankName: input.bank_name } : {}),
         ...(input.bank_account !== undefined ? { bankAccount: input.bank_account } : {}),
         ...(input.account_holder_name !== undefined ? { accountHolderName: input.account_holder_name } : {}),
-        ...(input.zalo_phone !== undefined ? { zaloPhone: input.zalo_phone } : {}),
-        ...(input.zalo_notify_hour !== undefined ? { zaloNotifyHour: input.zalo_notify_hour } : {}),
-        ...(input.zalo_notify_enabled !== undefined ? { zaloNotifyEnabled: input.zalo_notify_enabled } : {}),
         ...(input.default_low_stock_threshold !== undefined
           ? { defaultLowStockThreshold: input.default_low_stock_threshold }
           : {}),

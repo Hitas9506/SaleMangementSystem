@@ -160,8 +160,6 @@ async function main() {
     await prisma.storeSetting.create({
       data: {
         storeName: 'Cửa hàng Vật tư Gia đình',
-        zaloNotifyHour: 21,
-        zaloNotifyEnabled: true,
         defaultLowStockThreshold: 5,
       },
     });

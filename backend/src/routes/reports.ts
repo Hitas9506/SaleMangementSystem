@@ -2,7 +2,6 @@ import { Router } from 'express';
 
 import { invalidInput } from '../lib/apiError';
 import { prisma } from '../lib/prisma';
-import { sendDailyZaloReport } from '../lib/zaloReport';
 import { toIso, toNumber } from '../utils/format';
 import { getLastImportPrices } from '../utils/importPrices';
 
@@ -240,11 +239,3 @@ reportsRouter.get('/inventory', async (_req, res, next) => {
   }
 });
 
-reportsRouter.post('/send-zalo', async (_req, res, next) => {
-  try {
-    const result = await sendDailyZaloReport();
-    res.json(result);
-  } catch (error) {
-    next(error);
-  }
-});

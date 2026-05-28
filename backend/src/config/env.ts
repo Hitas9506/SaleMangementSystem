@@ -10,8 +10,6 @@ const envSchema = z.object({
   SUPABASE_URL: z.string().min(1),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
-  ZALO_OA_ACCESS_TOKEN: z.string().min(1),
-  ZALO_RECIPIENT_PHONE: z.string().min(1),
   APP_SECRET_KEY: z.string().min(1),
 });
 
