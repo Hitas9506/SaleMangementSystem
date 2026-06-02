@@ -15,32 +15,79 @@ const settingsUpdateSchema = z.object({
   logo_url: z.string().url().optional().nullable(),
 });
 
-function settingsResponse(settings: any) {
+type StoreSettingsRow = {
+  id: string;
+  storeName?: string;
+  store_name?: string;
+  bankName?: string | null;
+  bank_name?: string | null;
+  bankAccount?: string | null;
+  bank_account?: string | null;
+  accountHolderName?: string | null;
+  account_holder_name?: string | null;
+  defaultLowStockThreshold?: number;
+  default_low_stock_threshold?: number;
+  logoUrl?: string | null;
+  logo_url?: string | null;
+  createdAt?: Date | string;
+  created_at?: Date | string;
+  updatedAt?: Date | string;
+  updated_at?: Date | string;
+};
+
+function settingsResponse(settings: StoreSettingsRow) {
   return {
     id: settings.id,
-    store_name: settings.storeName,
-    bank_name: settings.bankName,
-    bank_account: settings.bankAccount,
-    account_holder_name: settings.accountHolderName,
-    default_low_stock_threshold: settings.defaultLowStockThreshold,
-    logo_url: settings.logoUrl,
-    created_at: toIso(settings.createdAt),
-    updated_at: toIso(settings.updatedAt),
+    store_name: settings.storeName ?? settings.store_name ?? 'Cửa hàng Vật tư Gia đình',
+    bank_name: settings.bankName ?? settings.bank_name ?? null,
+    bank_account: settings.bankAccount ?? settings.bank_account ?? null,
+    account_holder_name: settings.accountHolderName ?? settings.account_holder_name ?? null,
+    zalo_phone: null,
+    zalo_notify_hour: 8,
+    zalo_notify_enabled: false,
+    default_low_stock_threshold: settings.defaultLowStockThreshold ?? settings.default_low_stock_threshold ?? 5,
+    logo_url: settings.logoUrl ?? settings.logo_url ?? null,
+    created_at: toIso(settings.createdAt ?? settings.created_at),
+    updated_at: toIso(settings.updatedAt ?? settings.updated_at),
   };
 }
 
-async function getOrCreateSettings() {
-  const existing = await prisma.storeSetting.findFirst({ orderBy: { createdAt: 'asc' } });
-  if (existing) {
-    return existing;
-  }
+async function getOrCreateSettingsRaw(): Promise<StoreSettingsRow> {
+  const rows = await prisma.$queryRaw<StoreSettingsRow[]>`
+    SELECT id, store_name, bank_name, bank_account, account_holder_name,
+           default_low_stock_threshold, logo_url, created_at, updated_at
+    FROM store_settings
+    ORDER BY created_at ASC
+    LIMIT 1
+  `;
 
-  return prisma.storeSetting.create({
-    data: {
-      storeName: 'Cửa hàng Vật tư Gia đình',
-      defaultLowStockThreshold: 5,
-    },
-  });
+  if (rows[0]) return rows[0];
+
+  const inserted = await prisma.$queryRaw<StoreSettingsRow[]>`
+    INSERT INTO store_settings (store_name, default_low_stock_threshold)
+    VALUES ('Cửa hàng Vật tư Gia đình', 5)
+    RETURNING id, store_name, bank_name, bank_account, account_holder_name,
+              default_low_stock_threshold, logo_url, created_at, updated_at
+  `;
+
+  return inserted[0];
+}
+
+async function getOrCreateSettings(): Promise<StoreSettingsRow> {
+  try {
+    const existing = await prisma.storeSetting.findFirst({ orderBy: { createdAt: 'asc' } });
+    if (existing) return existing;
+
+    return prisma.storeSetting.create({
+      data: {
+        storeName: 'Cửa hàng Vật tư Gia đình',
+        defaultLowStockThreshold: 5,
+      },
+    });
+  } catch (error) {
+    console.warn('[SETTINGS_FALLBACK] Prisma storeSetting failed; using raw SQL fallback', error);
+    return getOrCreateSettingsRaw();
+  }
 }
 
 settingsRouter.get('/', async (_req, res, next) => {
