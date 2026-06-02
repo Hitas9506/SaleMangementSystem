@@ -1,6 +1,8 @@
 import { Router } from 'express';
+import { Pool } from 'pg';
 import { z } from 'zod';
 
+import { env } from '../config/env';
 import { prisma } from '../lib/prisma';
 import { toIso } from '../utils/format';
 
@@ -52,25 +54,33 @@ function settingsResponse(settings: StoreSettingsRow) {
   };
 }
 
+const directPool = new Pool({
+  connectionString: env.DATABASE_URL,
+  max: 3,
+  idleTimeoutMillis: 10000,
+  connectionTimeoutMillis: 10000,
+});
+
 async function getOrCreateSettingsRaw(): Promise<StoreSettingsRow> {
-  const rows = await prisma.$queryRaw<StoreSettingsRow[]>`
-    SELECT id, store_name, bank_name, bank_account, account_holder_name,
-           default_low_stock_threshold, logo_url, created_at, updated_at
-    FROM store_settings
-    ORDER BY created_at ASC
-    LIMIT 1
-  `;
+  const rows = await directPool.query<StoreSettingsRow>(
+    `SELECT id, store_name, bank_name, bank_account, account_holder_name,
+            default_low_stock_threshold, logo_url, created_at, updated_at
+     FROM store_settings
+     ORDER BY created_at ASC
+     LIMIT 1`,
+  );
 
-  if (rows[0]) return rows[0];
+  if (rows.rows[0]) return rows.rows[0];
 
-  const inserted = await prisma.$queryRaw<StoreSettingsRow[]>`
-    INSERT INTO store_settings (store_name, default_low_stock_threshold)
-    VALUES ('Cửa hàng Vật tư Gia đình', 5)
-    RETURNING id, store_name, bank_name, bank_account, account_holder_name,
-              default_low_stock_threshold, logo_url, created_at, updated_at
-  `;
+  const inserted = await directPool.query<StoreSettingsRow>(
+    `INSERT INTO store_settings (store_name, default_low_stock_threshold)
+     VALUES ($1, $2)
+     RETURNING id, store_name, bank_name, bank_account, account_holder_name,
+               default_low_stock_threshold, logo_url, created_at, updated_at`,
+    ['Cửa hàng Vật tư Gia đình', 5],
+  );
 
-  return inserted[0];
+  return inserted.rows[0];
 }
 
 async function getOrCreateSettings(): Promise<StoreSettingsRow> {
@@ -92,7 +102,7 @@ async function getOrCreateSettings(): Promise<StoreSettingsRow> {
 
 settingsRouter.get('/', async (_req, res, next) => {
   try {
-    const settings = await getOrCreateSettings();
+    const settings = await getOrCreateSettingsRaw();
     res.json(settingsResponse(settings));
   } catch (error) {
     next(error);
