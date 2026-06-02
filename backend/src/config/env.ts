@@ -7,10 +7,11 @@ const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
   PORT: z.coerce.number().int().positive().default(3000),
   DATABASE_URL: z.string().min(1),
-  SUPABASE_URL: z.string().min(1),
+  SUPABASE_URL: z.string().url(),
   SUPABASE_SERVICE_ROLE_KEY: z.string().min(1),
   GEMINI_API_KEY: z.string().min(1),
   APP_SECRET_KEY: z.string().min(1),
+  ALLOWED_ORIGINS: z.string().optional(), // Comma-separated list of allowed origins
 });
 
 const parsedEnv = envSchema.safeParse(process.env);

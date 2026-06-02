@@ -6,7 +6,10 @@ import { describeProductImage, embedText, searchSimilarProducts } from '../lib/a
 export const aiRouter = Router();
 
 const aiSearchSchema = z.object({
-  image_base64: z.string().min(100, 'image_base64 quá ngắn'),
+  image_base64: z
+    .string()
+    .min(100, 'image_base64 quá ngắn')
+    .max(10 * 1024 * 1024, 'image_base64 quá lớn (max 10MB)'), // ~10MB base64
   mime_type: z.enum(['image/jpeg', 'image/png']).default('image/jpeg'),
 });
 

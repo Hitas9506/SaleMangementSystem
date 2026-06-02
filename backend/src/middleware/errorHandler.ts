@@ -3,7 +3,7 @@ import { ZodError } from 'zod';
 
 import { ApiError } from '../lib/apiError';
 
-export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
+export const errorHandler: ErrorRequestHandler = (error, req, res, _next) => {
   if (error instanceof ApiError) {
     res.status(error.statusCode).json({
       error: error.code,
@@ -21,8 +21,18 @@ export const errorHandler: ErrorRequestHandler = (error, _req, res, _next) => {
     return;
   }
 
+  // CORS error
+  if (error.message === 'Not allowed by CORS') {
+    res.status(403).json({
+      error: 'FORBIDDEN',
+      message: 'Origin không được phép truy cập API này',
+    });
+    return;
+  }
+
   // Log detailed error for debugging
   console.error('[ERROR]', {
+    requestId: (req as any).requestId,
     name: error?.name,
     message: error?.message,
     stack: error?.stack,

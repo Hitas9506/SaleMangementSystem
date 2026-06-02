@@ -223,6 +223,24 @@ productsRouter.put('/:id', async (req, res, next) => {
   }
 });
 
+productsRouter.delete('/:id', async (req, res, next) => {
+  try {
+    const product = await prisma.product.findUnique({ where: { id: req.params.id } });
+    if (!product || !product.isActive) {
+      throw notFound('Sản phẩm không tồn tại');
+    }
+
+    await prisma.product.update({
+      where: { id: req.params.id },
+      data: { isActive: false },
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    next(error);
+  }
+});
+
 productsRouter.post('/:id/regenerate-embedding', async (req, res, next) => {
   try {
     const result = await regenerateProductEmbedding(req.params.id);

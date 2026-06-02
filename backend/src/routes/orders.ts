@@ -16,7 +16,7 @@ const orderItemSchema = z.object({
 const orderCreateSchema = z.object({
   payment_method: z.enum(['cash', 'qr']).default('cash'),
   paid_amount: z.coerce.number().nonnegative().optional().nullable(),
-  payment_status: z.enum(['pending', 'paid']).optional(),
+  payment_status: z.enum(['pending', 'paid', 'cancelled']).optional(),
   note: z.string().optional().nullable(),
   order_date: z.coerce.date().optional(),
   items: z.array(orderItemSchema).min(1),
@@ -64,7 +64,7 @@ ordersRouter.get('/', async (req, res, next) => {
     const page = parsePositiveInt(req.query.page, 1);
     const limit = parsePositiveInt(req.query.limit, 20, 100);
     const skip = (page - 1) * limit;
-    const status = typeof req.query.status === 'string' ? req.query.status : undefined;
+    const statusParam = typeof req.query.status === 'string' ? req.query.status : undefined;
     const fromDate = typeof req.query.from_date === 'string' ? new Date(req.query.from_date) : undefined;
     const toDate = typeof req.query.to_date === 'string' ? new Date(req.query.to_date) : undefined;
 
@@ -72,8 +72,12 @@ ordersRouter.get('/', async (req, res, next) => {
       throw invalidInput('from_date/to_date không hợp lệ');
     }
 
+    // Validate status is a valid PaymentStatus enum value
+    const validStatuses = ['pending', 'paid', 'cancelled'];
+    const status = statusParam && validStatuses.includes(statusParam) ? statusParam : undefined;
+
     const where = {
-      ...(status ? { paymentStatus: status } : {}),
+      ...(status ? { paymentStatus: status as 'pending' | 'paid' | 'cancelled' } : {}),
       ...((fromDate || toDate)
         ? {
             orderDate: {

@@ -8,6 +8,17 @@ datasource db {
   extensions = [vector]
 }
 
+enum PaymentMethod {
+  cash
+  qr
+}
+
+enum PaymentStatus {
+  pending
+  paid
+  cancelled
+}
+
 model Category {
   id        String    @id @default(uuid()) @db.Uuid
   name      String    @unique @db.VarChar(100)
@@ -82,14 +93,14 @@ model ImportLog {
 }
 
 model Order {
-  id            String      @id @default(uuid()) @db.Uuid
-  totalAmount   Decimal     @map("total_amount") @db.Decimal(12, 0)
-  paidAmount    Decimal?    @map("paid_amount") @db.Decimal(12, 0)
-  paymentMethod String      @map("payment_method") @db.VarChar(20)
-  paymentStatus String      @map("payment_status") @db.VarChar(20)
+  id            String        @id @default(uuid()) @db.Uuid
+  totalAmount   Decimal       @map("total_amount") @db.Decimal(12, 0)
+  paidAmount    Decimal?      @map("paid_amount") @db.Decimal(12, 0)
+  paymentMethod PaymentMethod @map("payment_method")
+  paymentStatus PaymentStatus @map("payment_status")
   note          String?
-  orderDate     DateTime    @map("order_date") @db.Timestamp(6)
-  createdAt     DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  orderDate     DateTime      @map("order_date") @db.Timestamp(6)
+  createdAt     DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
   items         OrderItem[]
   returns       Return[]
 
